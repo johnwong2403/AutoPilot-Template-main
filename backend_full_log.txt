@@ -1,0 +1,300 @@
+﻿backend-1  | ≡ƒôä Running database migrations...
+backend-1  | INFO  [alembic.runtime.migration] Context impl PostgresqlImpl.
+backend-1  | INFO  [alembic.runtime.migration] Will assume transactional DDL.
+backend-1  | ≡ƒ¢á∩╕Å  Starting development server...
+backend-1  | [2026-08-06 06:33:49 +0000] [1] [INFO] Starting gunicorn 26.0.0
+backend-1  | [2026-08-06 06:33:49 +0000] [1] [INFO] Listening at: http://0.0.0.0:8000 (1)
+backend-1  | [2026-08-06 06:33:49 +0000] [1] [INFO] Using worker: uvicorn.workers.UvicornWorker
+backend-1  | [2026-08-06 06:33:49 +0000] [9] [INFO] Booting worker with pid: 9
+backend-1  | [2026-08-06 06:33:49 +0000] [9] [WARNING] Reloader is on. Use in development only!
+backend-1  | [2026-08-06 06:33:49 +0000] [1] [INFO] Control socket listening at /root/.gunicorn/gunicorn.ctl
+backend-1  | /opt/venv/lib/python3.11/site-packages/pydantic/_internal/_config.py:386: UserWarning: Valid config keys have changed in V2:
+backend-1  | * 'orm_mode' has been renamed to 'from_attributes'
+backend-1  |   warnings.warn(message, UserWarning)
+backend-1  | ΓÜá∩╕Å  AUTH_BYPASS is enabled ΓÇö all requests will be authenticated as Dev User. Do NOT use in production.
+backend-1  | geoip2 not installed. Geofencing will default to 'US'.
+backend-1  | [2026-08-06 06:33:50 +0000] [9] [ERROR] invalid syntax (onboarding.py, line 1)
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/gunicorn/workers/base.py", line 148, in load_wsgi
+backend-1  |     self.wsgi = self.app.wsgi()
+backend-1  |                 ^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/gunicorn/app/base.py", line 66, in wsgi
+backend-1  |     self.callable = self.load()
+backend-1  |                     ^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/gunicorn/app/wsgiapp.py", line 57, in load
+backend-1  |     return self.load_wsgiapp()
+backend-1  |            ^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/gunicorn/app/wsgiapp.py", line 47, in load_wsgiapp
+backend-1  |     return util.import_app(self.app_uri)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/gunicorn/util.py", line 411, in import_app
+backend-1  |     mod = importlib.import_module(module)
+backend-1  |           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/usr/local/lib/python3.11/importlib/__init__.py", line 126, in import_module
+backend-1  |     return _bootstrap._gcd_import(name[level:], package, level)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "<frozen importlib._bootstrap>", line 1204, in _gcd_import
+backend-1  |   File "<frozen importlib._bootstrap>", line 1176, in _find_and_load
+backend-1  |   File "<frozen importlib._bootstrap>", line 1147, in _find_and_load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap>", line 690, in _load_unlocked
+backend-1  |   File "<frozen importlib._bootstrap_external>", line 940, in exec_module
+backend-1  |   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
+backend-1  |   File "/app/app/main.py", line 16, in <module>
+backend-1  |     from .routers import (
+backend-1  |   File "/app/app/routers/__init__.py", line 13, in <module>
+backend-1  |     from .onboarding import router as onboarding_router
+backend-1  |   File "/app/app/routers/onboarding.py", line 1
+backend-1  |     ="""
+backend-1  |     ^
+backend-1  | SyntaxError: invalid syntax
+backend-1  | [2026-08-06 06:33:50 +0000] [9] [INFO] Started server process [9]
+backend-1  | [2026-08-06 06:33:50 +0000] [9] [INFO] Waiting for application startup.
+backend-1  | [2026-08-06 06:33:50 +0000] [9] [INFO] ASGI 'lifespan' protocol appears unsupported.
+backend-1  | [2026-08-06 06:33:50 +0000] [9] [INFO] Application startup complete.
+backend-1  | [2026-08-06 06:33:51 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 127.0.0.1:40026 - "GET /api/health HTTP/1.1" 500
+backend-1  | [2026-08-06 06:33:56 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 127.0.0.1:40036 - "GET /api/health HTTP/1.1" 500
+backend-1  | 127.0.0.1:49720 - "GET /api/health HTTP/1.1" 500
+backend-1  | [2026-08-06 06:34:01 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | [2026-08-06 06:34:06 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  | 127.0.0.1:49736 - "GET /api/health HTTP/1.1" 500
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 127.0.0.1:46938 - "GET /api/health HTTP/1.1" 500
+backend-1  | [2026-08-06 06:34:11 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | [2026-08-06 06:34:16 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 127.0.0.1:46946 - "GET /api/health HTTP/1.1" 500
+backend-1  | [2026-08-06 06:34:22 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 127.0.0.1:34250 - "GET /api/health HTTP/1.1" 500
+backend-1  | 127.0.0.1:34258 - "GET /api/health HTTP/1.1" 500
+backend-1  | [2026-08-06 06:34:27 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | [2026-08-06 06:34:29 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 172.18.0.1:38242 - "GET /api/onboarding/run-state HTTP/1.1" 500
+backend-1  | [2026-08-06 06:34:57 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | 127.0.0.1:50728 - "GET /api/health HTTP/1.1" 500
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 127.0.0.1:45626 - "GET /api/health HTTP/1.1" 500
+backend-1  | [2026-08-06 06:35:27 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | [2026-08-06 06:35:29 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  | 172.18.0.1:38258 - "GET /api/onboarding/run-state HTTP/1.1" 500
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | [2026-08-06 06:35:57 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 127.0.0.1:55294 - "GET /api/health HTTP/1.1" 500
+backend-1  | [2026-08-06 06:36:27 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | 127.0.0.1:51160 - "GET /api/health HTTP/1.1" 500
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 172.18.0.1:43648 - "GET /api/onboarding/run-state HTTP/1.1" 500
+backend-1  | [2026-08-06 06:36:29 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | [2026-08-06 06:36:57 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 127.0.0.1:57948 - "GET /api/health HTTP/1.1" 500
+backend-1  | 127.0.0.1:34430 - "GET /api/health HTTP/1.1" 500
+backend-1  | [2026-08-06 06:37:27 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | [2026-08-06 06:37:29 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 172.18.0.1:43658 - "GET /api/onboarding/run-state HTTP/1.1" 500
+backend-1  | [2026-08-06 06:37:57 +0000] [9] [ERROR] Exception in ASGI application
+backend-1  | Traceback (most recent call last):
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/protocols/http/h11_impl.py", line 416, in run_asgi
+backend-1  |     result = await app(  # type: ignore[func-returns-value]
+backend-1  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+backend-1  |     return await self.app(scope, receive, send)
+backend-1  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+backend-1  |   File "/opt/venv/lib/python3.11/site-packages/uvicorn/middleware/asgi2.py", line 14, in __call__
+backend-1  |     instance = self.app(scope)
+backend-1  |                ^^^^^^^^^^^^^^^
+backend-1  | TypeError: make_fail_app.<locals>.app() missing 1 required positional argument: 'start_response'
+backend-1  | 127.0.0.1:49332 - "GET /api/health HTTP/1.1" 500
