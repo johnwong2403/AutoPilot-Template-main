@@ -74,6 +74,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
   const [isSaving, setIsSaving] = useState(false)
   const [tagInput, setTagInput] = useState('')
   const [activeTab, setActiveTab] = useState<'basic' | 'advanced'>('basic')
+  const [saveError, setSaveError] = useState<string | null>(null)
 
   // Initialize form when policy changes
   useEffect(() => {
@@ -110,6 +111,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
         threshold: null,
       })
     }
+    setSaveError(null)
   }, [policy])
 
   // Handle escape key
@@ -164,6 +166,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
     if (!formData.name.trim() || !formData.natural_language.trim()) return
 
     setIsSaving(true)
+    setSaveError(null)
     try {
       const payload: Record<string, unknown> = {
         name: formData.name,
@@ -184,17 +187,27 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
         payload.threshold = formData.threshold
       }
 
+      // NOTE: the policies CRUD lives at /api/policies (confirmed via
+      // GET /api/policies returning real rows). /api/ai/policies is a
+      // separate, AI-assistance-only router (e.g. /translate) and does
+      // NOT have GET/PATCH/POST for individual policies — using it here
+      // silently 404'd on every save. Fixed to call /api/policies.
       let savedPolicy: Policy
       if (policy) {
-        savedPolicy = await apiClient.patch<Policy>(`/api/ai/policies/${policy.id}`, payload)
+        savedPolicy = await apiClient.patch<Policy>(`/api/policies/${policy.id}`, payload)
       } else {
-        savedPolicy = await apiClient.post<Policy>('/api/ai/policies', payload)
+        savedPolicy = await apiClient.post<Policy>('/api/policies', payload)
       }
-      
+
       onSave(savedPolicy)
       onClose()
     } catch (error) {
       console.error('Save failed:', error)
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Failed to save policy. Please try again.'
+      setSaveError(message)
     } finally {
       setIsSaving(false)
     }
@@ -638,6 +651,15 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
               </>
             )}
           </div>
+
+          {/* Save error message */}
+          {saveError && (
+            <div className="px-6 pb-2">
+              <div className="rounded-lg border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/50 px-3 py-2 text-sm text-red-700 dark:text-red-300">
+                {saveError}
+              </div>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/60">

@@ -15,6 +15,10 @@ import {
   CheckCircle2 as CheckIcon,
   AlertTriangle as WarningIcon,
   User as UserIcon,
+  Circle as CircleIcon,
+  ListChecks as ChecklistIcon,
+  Plus as PlusIcon,
+  Loader2 as SpinnerIcon,
 } from 'lucide-react'
 
 const AUTO_AUDIT_TRAIL_URL =
@@ -50,6 +54,11 @@ interface EmployeeSnapshot {
   message?: string
   latest_task?: LatestTask | null
   worker?: Worker | null
+}
+
+interface EmployeeTasksResponse {
+  employee_id: string
+  tasks: LatestTask[]
 }
 
 interface PolicyEvalResult {
@@ -167,6 +176,291 @@ function StatCard({
         <p className="text-xs font-medium uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</p>
       </div>
       <p className="mt-3 text-3xl font-bold text-slate-800 dark:text-slate-100">{value}</p>
+    </div>
+  )
+}
+
+// ============================================================================
+// Next-Steps Checklist — every onboarding task for the last-processed
+// employee. HR can toggle a task's completion status and add brand-new
+// custom tasks outside the standard automated flow. Pulled/updated via
+// /employee/{id}/tasks and /tasks/{id}/status.
+// ============================================================================
+
+function ChecklistItem({
+  task,
+  onToggle,
+  busy,
+}: {
+  task: LatestTask
+  onToggle: (task: LatestTask) => void
+  busy: boolean
+}) {
+  const status = (task.Status || '').trim()
+  const isDone = status === 'Completed'
+  const isEscalated = status === 'Escalated'
+
+  return (
+    <div className="flex items-start gap-3 py-2">
+      <button
+        type="button"
+        onClick={() => onToggle(task)}
+        disabled={busy}
+        className="mt-0.5 shrink-0 disabled:opacity-50"
+        title={isDone ? 'Mark as not started' : 'Mark as completed'}
+      >
+        {busy ? (
+          <SpinnerIcon className="h-4 w-4 animate-spin text-slate-400" />
+        ) : isDone ? (
+          <CheckIcon className="h-4 w-4 text-emerald-500" />
+        ) : isEscalated ? (
+          <WarningIcon className="h-4 w-4 text-red-500" />
+        ) : (
+          <CircleIcon className="h-4 w-4 text-slate-300 dark:text-slate-600 hover:text-indigo-400" />
+        )}
+      </button>
+      <div className="flex-1 min-w-0">
+        <p
+          className={`text-sm font-medium ${
+            isDone
+              ? 'text-slate-400 dark:text-slate-500 line-through'
+              : 'text-slate-800 dark:text-slate-100'
+          }`}
+        >
+          {task.Step_Name || 'Untitled task'}
+        </p>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-400 dark:text-slate-500">
+          {task.Milestone && <span>{task.Milestone}</span>}
+          {task.Assigned_To_Role && <span>Owner: {task.Assigned_To_Role}</span>}
+          {task.Due_Date && !isDone && <span>Due: {task.Due_Date}</span>}
+        </div>
+      </div>
+      <span
+        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+          isDone
+            ? 'bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400'
+            : isEscalated
+            ? 'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400'
+            : 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400'
+        }`}
+      >
+        {status || 'Pending'}
+      </span>
+    </div>
+  )
+}
+
+function AddTaskForm({
+  onAdd,
+  saving,
+}: {
+  onAdd: (stepName: string, dueDate: string) => void
+  saving: boolean
+}) {
+  const [open, setOpen] = useState(false)
+  const [stepName, setStepName] = useState('')
+  const [dueDate, setDueDate] = useState('')
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-3 flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+      >
+        <PlusIcon className="h-4 w-4" />
+        Add Task
+      </button>
+    )
+  }
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault()
+        if (!stepName.trim()) return
+        onAdd(stepName.trim(), dueDate)
+        setStepName('')
+        setDueDate('')
+        setOpen(false)
+      }}
+      className="mt-3 space-y-2 rounded-xl border border-slate-200 dark:border-slate-700 p-3"
+    >
+      <input
+        type="text"
+        value={stepName}
+        onChange={(e) => setStepName(e.target.value)}
+        placeholder="Task name (e.g. Book welcome lunch)"
+        autoFocus
+        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
+      />
+      <input
+        type="date"
+        value={dueDate}
+        onChange={(e) => setDueDate(e.target.value)}
+        className="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-100 dark:focus:ring-indigo-900"
+      />
+      <div className="flex gap-2">
+        <Button type="submit" size="sm" disabled={saving || !stepName.trim()} className="flex-1">
+          {saving ? 'Adding…' : 'Add'}
+        </Button>
+        <Button type="button" size="sm" variant="outline" onClick={() => setOpen(false)}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+const CHECKLIST_COLLAPSED_COUNT = 4
+
+function NextStepsChecklist({
+  employeeId,
+  workerName,
+}: {
+  employeeId: string
+  workerName: string | null
+}) {
+  const [tasks, setTasks] = useState<LatestTask[] | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [togglingId, setTogglingId] = useState<string | null>(null)
+  const [addingTask, setAddingTask] = useState(false)
+  const [expanded, setExpanded] = useState(false)
+
+  const loadTasks = useCallback(() => {
+    setLoading(true)
+    apiClient<EmployeeTasksResponse>(`/api/onboarding/employee/${employeeId}/tasks`)
+      .then((data) => setTasks(data.tasks || []))
+      .catch((err) => {
+        console.error('Failed to load employee checklist', err)
+        setTasks([])
+      })
+      .finally(() => setLoading(false))
+  }, [employeeId])
+
+  useEffect(() => {
+    loadTasks()
+  }, [loadTasks])
+
+  const handleToggle = async (task: LatestTask) => {
+    if (!task.Event_ID) return
+    const isDone = (task.Status || '').trim() === 'Completed'
+    const newStatus = isDone ? 'Not Started' : 'Completed'
+
+    setTogglingId(task.Event_ID)
+    // Optimistic update
+    setTasks((prev) =>
+      (prev || []).map((t) => (t.Event_ID === task.Event_ID ? { ...t, Status: newStatus } : t))
+    )
+    try {
+      await apiClient(`/api/onboarding/tasks/${task.Event_ID}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus }),
+      })
+    } catch (err) {
+      console.error('Failed to update task status', err)
+      // Revert on failure
+      setTasks((prev) =>
+        (prev || []).map((t) => (t.Event_ID === task.Event_ID ? { ...t, Status: task.Status } : t))
+      )
+    } finally {
+      setTogglingId(null)
+    }
+  }
+
+  const handleAddTask = async (stepName: string, dueDate: string) => {
+    setAddingTask(true)
+    try {
+      await apiClient(`/api/onboarding/employee/${employeeId}/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          step_name: stepName,
+          due_date: dueDate || null,
+          milestone: 'Custom',
+        }),
+      })
+      loadTasks()
+    } catch (err) {
+      console.error('Failed to add task', err)
+    } finally {
+      setAddingTask(false)
+    }
+  }
+
+  const outstanding = (tasks || []).filter((t) => (t.Status || '').trim() !== 'Completed')
+  const hasMore = (tasks || []).length > CHECKLIST_COLLAPSED_COUNT
+  const firstTasks = (tasks || []).slice(0, CHECKLIST_COLLAPSED_COUNT)
+  const restTasks = (tasks || []).slice(CHECKLIST_COLLAPSED_COUNT)
+
+  return (
+    <div className="h-full rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+      <div className="mb-1 flex items-center gap-2">
+        <ChecklistIcon className="h-5 w-5 text-indigo-500" />
+        <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Next Steps Checklist</h2>
+      </div>
+      <p className="mb-4 text-xs text-slate-400 dark:text-slate-500">
+        Full onboarding checklist for {workerName || employeeId} — click a task to mark it done, or add your own.
+      </p>
+
+      {loading ? (
+        <p className="text-sm text-slate-400 dark:text-slate-500">Loading checklist...</p>
+      ) : !tasks || tasks.length === 0 ? (
+        <p className="text-sm text-slate-400 dark:text-slate-500">No onboarding tasks found for this employee.</p>
+      ) : (
+        <>
+          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            {firstTasks.map((task, idx) => (
+              <ChecklistItem
+                key={task.Event_ID || idx}
+                task={task}
+                onToggle={handleToggle}
+                busy={togglingId === task.Event_ID}
+              />
+            ))}
+          </div>
+
+          {expanded && restTasks.length > 0 && (
+            <motion.div
+              initial={{ clipPath: 'inset(0 100% 0 0)', opacity: 0.4 }}
+              animate={{ clipPath: 'inset(0 0% 0 0)', opacity: 1 }}
+              transition={{ duration: 0.45, ease: 'easeOut' }}
+              className="divide-y divide-slate-100 dark:divide-slate-800 border-t border-slate-100 dark:border-slate-800"
+            >
+              {restTasks.map((task, idx) => (
+                <ChecklistItem
+                  key={task.Event_ID || idx}
+                  task={task}
+                  onToggle={handleToggle}
+                  busy={togglingId === task.Event_ID}
+                />
+              ))}
+            </motion.div>
+          )}
+
+          {hasMore && (
+            <button
+              type="button"
+              onClick={() => setExpanded((v) => !v)}
+              className="mt-3 flex items-center gap-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline"
+            >
+              {expanded ? '▲ Show less' : `▶ Show all ${tasks.length} tasks (${restTasks.length} more)`}
+            </button>
+          )}
+        </>
+      )}
+
+
+      {!loading && tasks && tasks.length > 0 && (
+        <p className="mt-4 text-xs text-slate-400 dark:text-slate-500">
+          {outstanding.length === 0
+            ? 'All tasks completed.'
+            : `${outstanding.length} of ${tasks.length} task${tasks.length > 1 ? 's' : ''} still outstanding.`}
+        </p>
+      )}
+
+      {!loading && <AddTaskForm onAdd={handleAddTask} saving={addingTask} />}
     </div>
   )
 }
@@ -433,41 +727,19 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Recent Activity + Latest Employee Snapshot */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Recent Activity */}
-        <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">Recent Activity</h2>
-          {timeline.length === 0 ? (
-            <p className="text-sm text-slate-400 dark:text-slate-500">
-              No run yet. Click &ldquo;Start Orchestrator&rdquo; to trigger the Orchestrator.
-            </p>
-          ) : (
-            <div className="space-y-4">
-              {timeline.map((event) => (
-                <div key={event.key} className="flex items-start gap-3">
-                  <div
-                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-                      event.tone === 'success'
-                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400'
-                        : event.tone === 'warning'
-                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400'
-                        : 'bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
-                    }`}
-                  >
-                    {event.icon}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{event.label}</p>
-                    {event.detail && <p className="text-xs text-slate-400 dark:text-slate-500">{event.detail}</p>}
-                  </div>
-                  {event.time && <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">{event.time}</span>}
-                </div>
-              ))}
-            </div>
-          )}
+      {/* Next Steps Checklist — full width, on top */}
+      {lastProcessedEmployeeId ? (
+        <NextStepsChecklist employeeId={lastProcessedEmployeeId} workerName={workerName} />
+      ) : (
+        <div className="flex items-center justify-center rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+          <p className="text-sm text-slate-400 dark:text-slate-500">
+            No run yet. The checklist will appear here once the Orchestrator processes someone.
+          </p>
         </div>
+      )}
 
+      {/* Below: Latest Employee Snapshot (left)  |  Recent Activity (right) */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Latest Employee Snapshot */}
         <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
           <h2 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">Latest Employee Snapshot</h2>
@@ -592,6 +864,39 @@ export default function HomePage() {
                   </div>
                 )
               })}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Activity */}
+        <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold text-slate-800 dark:text-slate-100">Recent Activity</h2>
+          {timeline.length === 0 ? (
+            <p className="text-sm text-slate-400 dark:text-slate-500">
+              No run yet. Click &ldquo;Start Orchestrator&rdquo; to trigger the Orchestrator.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {timeline.map((event) => (
+                <div key={event.key} className="flex items-start gap-3">
+                  <div
+                    className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                      event.tone === 'success'
+                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400'
+                        : event.tone === 'warning'
+                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-600 dark:text-amber-400'
+                        : 'bg-blue-100 dark:bg-blue-950 text-blue-600 dark:text-blue-400'
+                    }`}
+                  >
+                    {event.icon}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{event.label}</p>
+                    {event.detail && <p className="text-xs text-slate-400 dark:text-slate-500">{event.detail}</p>}
+                  </div>
+                  {event.time && <span className="shrink-0 text-xs text-slate-400 dark:text-slate-500">{event.time}</span>}
+                </div>
+              ))}
             </div>
           )}
         </div>

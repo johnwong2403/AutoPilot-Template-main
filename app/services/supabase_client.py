@@ -64,6 +64,80 @@ def fetch_employee_snapshot(employee_id: str):
     return {"status": "ok", "latest_task": latest_task, "worker": worker}
 
 
+def fetch_employee_tasks(employee_id: str) -> list[dict]:
+    """
+    Returns the FULL onboarding checklist for a single employee — every
+    row in Onboarding_Tasks for that Employee_ID, not just the first one.
+    Used to power the "what does this person need to do next" checklist
+    HR sees on the Dashboard. Sorted so incomplete items surface first,
+    then by due date.
+    """
+    resp = (
+        supabase.table("Onboarding_Tasks")
+        .select("*")
+        .eq("Employee_ID", employee_id)
+        .execute()
+    )
+    tasks = resp.data or []
+
+    def sort_key(t: dict):
+        status = (t.get("Status") or "").strip()
+        is_done = 1 if status == "Completed" else 0
+        due = t.get("Due_Date") or "9999-12-31"
+        return (is_done, due)
+
+    tasks.sort(key=sort_key)
+    return tasks
+
+
+def update_task_status(task_id: str, status: str) -> dict:
+    """
+    Updates the Status field of a single Onboarding_Tasks row — powers
+    the checklist checkbox on the Dashboard (HR marking a task done,
+    reopening it, etc). task_id refers to the Event_ID primary key.
+    """
+    updates: dict = {"Status": status}
+    if status == "Completed":
+        updates["Completed_Date"] = datetime.now(timezone.utc).date().isoformat()
+
+    resp = (
+        supabase.table("Onboarding_Tasks")
+        .update(updates)
+        .eq("Event_ID", task_id)
+        .execute()
+    )
+    return resp.data[0] if resp.data else {"Event_ID": task_id, **updates}
+
+
+def create_task(
+    employee_id: str,
+    step_name: str,
+    milestone: str | None = None,
+    assigned_to_role: str | None = None,
+    due_date: str | None = None,
+) -> dict:
+    """
+    Inserts a brand-new custom task into Onboarding_Tasks for the given
+    employee — powers "+ Add Task" on the Dashboard checklist, letting HR
+    add work outside the standard automated flow.
+    """
+    row: dict = {
+        "Employee_ID": employee_id,
+        "Step_Name": step_name,
+        "Status": "Not Started",
+        "Business_Process": "Onboarding",
+    }
+    if milestone:
+        row["Milestone"] = milestone
+    if assigned_to_role:
+        row["Assigned_To_Role"] = assigned_to_role
+    if due_date:
+        row["Due_Date"] = due_date
+
+    resp = supabase.table("Onboarding_Tasks").insert(row).execute()
+    return resp.data[0] if resp.data else row
+
+
 # ---------- Risk scoring (real, computed from actual data) ----------
 
 def compute_employee_risk_score(employee_id: str) -> dict:

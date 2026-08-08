@@ -12,6 +12,9 @@ from pydantic import BaseModel
 from app.services.supabase_client import (
     fetch_latest_onboarding_snapshot,
     fetch_employee_snapshot,
+    fetch_employee_tasks,
+    update_task_status,
+    create_task,
     fetch_latest_orchestrator_run,
     clear_orchestrator_runs,
     get_dashboard_stats,
@@ -26,6 +29,17 @@ class TriggerRequest(BaseModel):
     # real data instead of the front of the queue. Left blank/omitted, the
     # behavior is unchanged from before.
     employee_id: str | None = None
+
+
+class TaskStatusUpdate(BaseModel):
+    status: str
+
+
+class NewTaskRequest(BaseModel):
+    step_name: str
+    milestone: str | None = None
+    assigned_to_role: str | None = None
+    due_date: str | None = None
 
 
 @router.post("/trigger")
@@ -55,6 +69,59 @@ async def get_employee_snapshot(employee_id: str):
         return fetch_employee_snapshot(employee_id)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to read Supabase: {str(e)}")
+
+
+@router.get("/employee/{employee_id}/tasks")
+async def get_employee_tasks(employee_id: str):
+    """
+    Full onboarding checklist for one employee — every task row, sorted
+    with incomplete items first. Powers the "what does this person need
+    to do next" checklist HR sees on the Dashboard.
+    """
+    try:
+        tasks = fetch_employee_tasks(employee_id)
+        return {"employee_id": employee_id, "tasks": tasks}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to read Supabase: {str(e)}")
+
+
+@router.post("/employee/{employee_id}/tasks")
+async def add_employee_task(employee_id: str, body: NewTaskRequest):
+    """
+    Adds a brand-new custom task to this employee's checklist — lets HR
+    track work outside the standard automated flow.
+    """
+    if not body.step_name or not body.step_name.strip():
+        raise HTTPException(status_code=400, detail="step_name is required")
+    try:
+        task = create_task(
+            employee_id=employee_id,
+            step_name=body.step_name.strip(),
+            milestone=body.milestone,
+            assigned_to_role=body.assigned_to_role,
+            due_date=body.due_date,
+        )
+        return task
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to create task: {str(e)}")
+
+
+@router.patch("/tasks/{task_id}/status")
+async def update_task_status_route(task_id: str, body: TaskStatusUpdate):
+    """
+    Updates a single task's status — powers the checklist checkbox on
+    the Dashboard (mark done, reopen, etc). task_id is the Event_ID.
+    """
+    valid_statuses = {"Not Started", "In Progress", "Completed", "Escalated"}
+    if body.status not in valid_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail=f"status must be one of {sorted(valid_statuses)}",
+        )
+    try:
+        return update_task_status(task_id, body.status)
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to update task: {str(e)}")
 
 
 @router.get("/run-state")
