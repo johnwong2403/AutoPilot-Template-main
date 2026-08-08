@@ -76,6 +76,7 @@ interface RunState {
   activity_runs: ActivityRunStep[]
   policy_results: PolicyEvalResult[]
   triggered_at: string
+  error_message?: string | null
 }
 
 interface TimelineEvent {
@@ -177,6 +178,7 @@ export default function HomePage() {
   const [resetBusy, setResetBusy] = useState(false)
   const [triggerError, setTriggerError] = useState<string | null>(null)
   const [showRaw, setShowRaw] = useState(false)
+  const [employeeIdInput, setEmployeeIdInput] = useState('')
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const lastFetchedEmployeeId = useRef<string | null>(null)
 
@@ -228,12 +230,36 @@ export default function HomePage() {
     setTriggerBusy(true)
     setTriggerError(null)
     try {
+      const trimmedEmployeeId = employeeIdInput.trim()
       const newRun = await apiClient<RunState>('/api/onboarding/trigger', {
         method: 'POST',
+        // Only send a body when an employee ID was actually typed — an
+        // empty/omitted body keeps the original "process front of queue"
+        // behavior exactly as it was before.
+        ...(trimmedEmployeeId
+          ? {
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ employee_id: trimmedEmployeeId }),
+            }
+          : {}),
       })
       setRunState(newRun)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to start onboarding cycle'
+      let message = 'Failed to start onboarding cycle'
+      if (err instanceof Error && typeof err.message === 'string' && err.message.trim()) {
+        message = err.message
+      } else if (typeof err === 'string') {
+        message = err
+      } else if (err && typeof err === 'object') {
+        const anyErr = err as Record<string, unknown>
+        if (typeof anyErr.detail === 'string') {
+          message = anyErr.detail
+        } else if (Array.isArray(anyErr.detail) && anyErr.detail[0] && typeof (anyErr.detail[0] as Record<string, unknown>).msg === 'string') {
+          message = (anyErr.detail[0] as Record<string, unknown>).msg as string
+        } else if (typeof anyErr.message === 'string') {
+          message = anyErr.message
+        }
+      }
       setTriggerError(message)
     } finally {
       setTriggerBusy(false)
@@ -258,6 +284,7 @@ export default function HomePage() {
   }
 
   const isRunning = runState?.status === 'running'
+  const hasErrored = runState?.status === 'error'
   const activityRuns = runState?.activity_runs || []
   const policyResults = runState?.policy_results || []
   const triggeredCount = policyResults.filter((r) => r.result === 'triggered').length
@@ -347,21 +374,40 @@ export default function HomePage() {
               </p>
             </div>
           </div>
-          <Button
-            onClick={handleRunOrchestrator}
-            disabled={triggerBusy || isRunning}
-            className="bg-white text-indigo-700 hover:bg-white/90"
-            size="lg"
-          >
-            <PlayIcon className="mr-2 h-4 w-4" />
-            {isRunning ? 'Running…' : triggerBusy ? 'Starting…' : 'Start Orchestrator'}
-          </Button>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <input
+              type="text"
+              value={employeeIdInput}
+              onChange={(e) => setEmployeeIdInput(e.target.value)}
+              placeholder="Employee ID (optional)"
+              disabled={triggerBusy || isRunning}
+              className="rounded-lg border border-white/30 bg-white/10 px-3 py-2.5 text-sm text-white placeholder:text-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 disabled:opacity-60 sm:w-48"
+            />
+            <Button
+              onClick={handleRunOrchestrator}
+              disabled={triggerBusy || isRunning}
+              className="bg-white text-indigo-700 hover:bg-white/90"
+              size="lg"
+            >
+              <PlayIcon className="mr-2 h-4 w-4" />
+              {isRunning ? 'Running…' : triggerBusy ? 'Starting…' : 'Start Orchestrator'}
+            </Button>
+          </div>
         </div>
+        <p className="relative z-10 mt-3 text-xs text-white/70">
+          Leave blank to process the front of the queue, or enter a specific Employee ID (e.g. EMP7001) to process that employee&rsquo;s real data instead.
+        </p>
       </div>
 
       {triggerError && (
         <div className="rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/50 p-4 text-sm text-red-700 dark:text-red-300">
           {triggerError}
+        </div>
+      )}
+
+      {hasErrored && runState?.error_message && (
+        <div className="rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/50 p-4 text-sm text-red-700 dark:text-red-300">
+          {runState.error_message}
         </div>
       )}
 
@@ -375,7 +421,11 @@ export default function HomePage() {
             update the moment it completes, even if you navigate away and come back.
           </p>
           <a href={AUTO_AUDIT_TRAIL_URL} target="_blank" rel="noopener noreferrer">
-            <Button variant="outline" size="sm">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-800 text-amber-800 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-slate-700"
+            >
               <ExternalLinkIcon className="mr-2 h-4 w-4" />
               Review &amp; Approve in Supervity Auto
             </Button>

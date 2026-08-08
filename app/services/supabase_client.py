@@ -64,6 +64,88 @@ def fetch_employee_snapshot(employee_id: str):
     return {"status": "ok", "latest_task": latest_task, "worker": worker}
 
 
+# ---------- Risk scoring (real, computed from actual data) ----------
+
+def compute_employee_risk_score(employee_id: str) -> dict:
+    """
+    Computes a real risk score (0-100) from actual onboarding task
+    status and pulse survey data for the given employee — replaces
+    the previous hardcoded placeholder value.
+
+    Rules (simple, explainable):
+      - Each "Escalated" task            -> +15
+      - Each overdue "Not Started" task  -> +10
+      - Pulse survey missing entirely    -> +20
+      - Pulse survey present, negative   -> +20
+      - Pulse survey present, neutral    -> +10
+      - Pulse survey present, positive   -> +0
+    Score is capped at 100.
+    """
+    tasks_resp = (
+        supabase.table("Onboarding_Tasks")
+        .select("*")
+        .eq("Employee_ID", employee_id)
+        .execute()
+    )
+    tasks = tasks_resp.data or []
+
+    pulse_resp = (
+        supabase.table("Peakon_Engagement")
+        .select("*")
+        .eq("Employee_ID", employee_id)
+        .execute()
+    )
+    pulse_records = pulse_resp.data or []
+
+    score = 0
+    today = datetime.now(timezone.utc).date()
+
+    escalated_count = 0
+    overdue_not_started = 0
+
+    for t in tasks:
+        status = (t.get("Status") or "").strip()
+
+        if status == "Escalated":
+            escalated_count += 1
+            score += 15
+
+        elif status == "Not Started":
+            due_date_str = t.get("Due_Date")
+            if due_date_str:
+                try:
+                    due_date = datetime.fromisoformat(due_date_str).date()
+                    if due_date < today:
+                        overdue_not_started += 1
+                        score += 10
+                except Exception:
+                    pass
+
+    pulse_survey_missing = len(pulse_records) == 0
+
+    if pulse_survey_missing:
+        score += 20
+    else:
+        latest_pulse = sorted(
+            pulse_records, key=lambda r: r.get("Submitted_At") or "", reverse=True
+        )[0]
+        sentiment = (latest_pulse.get("sentiment") or "").lower()
+        if sentiment == "negative":
+            score += 20
+        elif sentiment == "neutral":
+            score += 10
+        # positive sentiment adds nothing
+
+    score = min(score, 100)
+
+    return {
+        "risk_score": score,
+        "pulse_survey_missing": pulse_survey_missing,
+        "escalated_tasks": escalated_count,
+        "overdue_not_started_tasks": overdue_not_started,
+    }
+
+
 # ---------- Policies ----------
 
 def list_policies():
@@ -202,7 +284,12 @@ def list_insights(limit: int = 50):
 
 # ---------- Orchestrator run state (fire-and-forget tracking) ----------
 
-def create_orchestrator_run():
+def create_orchestrator_run(employee_id: str | None = None):
+    # NOTE: employee_id is intentionally NOT written to the orchestrator_runs
+    # row here — the orchestrator_runs table does not have a column for it
+    # (confirmed by a PGRST204 schema error), so writing it would break this
+    # insert entirely. The employee actually used for this run is still
+    # recorded correctly inside policy_results once the run completes.
     row = {
         "workflow_id": None,
         "status": "running",

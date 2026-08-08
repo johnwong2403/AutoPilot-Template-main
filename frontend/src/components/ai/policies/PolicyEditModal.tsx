@@ -33,6 +33,7 @@ interface FormData {
   tags: string[]
   is_active: boolean
   dsl: PolicyDSL | null
+  threshold: number | null
 }
 
 // ============================================================================
@@ -67,6 +68,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
     tags: [],
     is_active: true,
     dsl: null,
+    threshold: null,
   })
   const [isTranslating, setIsTranslating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -87,6 +89,10 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
         tags: policy.tags,
         is_active: policy.is_active,
         dsl: policy.dsl,
+        threshold:
+          (policy as unknown as { threshold?: number | string }).threshold != null
+            ? Number((policy as unknown as { threshold?: number | string }).threshold)
+            : null,
       })
     } else {
       // Reset for new policy
@@ -101,6 +107,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
         tags: [],
         is_active: true,
         dsl: null,
+        threshold: null,
       })
     }
   }, [policy])
@@ -158,7 +165,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
 
     setIsSaving(true)
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         name: formData.name,
         description: formData.description,
         natural_language: formData.natural_language,
@@ -169,6 +176,12 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
         tags: formData.tags,
         is_active: formData.is_active,
         dsl: formData.policy_type === 'logical' ? formData.dsl : null,
+      }
+
+      // Only include threshold if this policy actually has one — avoids
+      // sending it for policies that don't use a numeric threshold field.
+      if (formData.threshold !== null && !Number.isNaN(formData.threshold)) {
+        payload.threshold = formData.threshold
       }
 
       let savedPolicy: Policy
@@ -204,45 +217,45 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
         onClick={onClose}
       >
         <motion.div
-          className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+          className="relative w-full max-w-2xl max-h-[90vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
           variants={modalVariants}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-slate-700">
             <div className="flex items-center gap-3">
               <div className={cn(
                 'p-2 rounded-lg',
-                policy ? 'bg-blue-100' : 'bg-emerald-100'
+                policy ? 'bg-blue-100 dark:bg-blue-900/40' : 'bg-emerald-100 dark:bg-emerald-900/40'
               )}>
                 {policy ? (
-                  <Icons.pencil className="h-5 w-5 text-blue-600" />
+                  <Icons.pencil className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                 ) : (
-                  <Icons.plus className="h-5 w-5 text-emerald-600" />
+                  <Icons.plus className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                 )}
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-brand-navy">
+                <h2 className="text-lg font-semibold text-brand-navy dark:text-white">
                   {policy ? 'Edit Policy' : 'Create New Policy'}
                 </h2>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground dark:text-slate-400">
                   {policy ? 'Modify the policy settings below' : 'Define a new AI policy'}
                 </p>
               </div>
             </div>
             <Button variant="ghost" size="icon" onClick={onClose}>
-              <Icons.close className="h-5 w-5" />
+              <Icons.close className="h-5 w-5 dark:text-slate-300" />
             </Button>
           </div>
 
           {/* Tabs */}
-          <div className="flex border-b border-gray-200">
+          <div className="flex border-b border-gray-200 dark:border-slate-700">
             <button
               className={cn(
                 'flex-1 py-3 text-sm font-medium transition-colors',
                 activeTab === 'basic'
                   ? 'text-brand-cornflower border-b-2 border-brand-cornflower'
-                  : 'text-muted-foreground hover:text-foreground'
+                  : 'text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white'
               )}
               onClick={() => setActiveTab('basic')}
             >
@@ -253,7 +266,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                 'flex-1 py-3 text-sm font-medium transition-colors',
                 activeTab === 'advanced'
                   ? 'text-brand-cornflower border-b-2 border-brand-cornflower'
-                  : 'text-muted-foreground hover:text-foreground'
+                  : 'text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white'
               )}
               onClick={() => setActiveTab('advanced')}
             >
@@ -267,7 +280,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
               <>
                 {/* Name */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                  <label className="block text-sm font-medium text-foreground dark:text-slate-200 mb-1.5">
                     Policy Name *
                   </label>
                   <input
@@ -276,7 +289,8 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     placeholder="e.g., Auto-Approve Low Value Invoices"
                     className={cn(
-                      'w-full px-3 py-2 rounded-lg border border-input',
+                      'w-full px-3 py-2 rounded-lg border border-input dark:border-slate-600',
+                      'dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500',
                       'text-sm focus:outline-none focus:ring-2 focus:ring-brand-cornflower/50'
                     )}
                   />
@@ -284,7 +298,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
 
                 {/* Description */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                  <label className="block text-sm font-medium text-foreground dark:text-slate-200 mb-1.5">
                     Description
                   </label>
                   <input
@@ -293,15 +307,46 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                     onChange={(e) => handleInputChange('description', e.target.value)}
                     placeholder="Brief description of what this policy does"
                     className={cn(
-                      'w-full px-3 py-2 rounded-lg border border-input',
+                      'w-full px-3 py-2 rounded-lg border border-input dark:border-slate-600',
+                      'dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500',
                       'text-sm focus:outline-none focus:ring-2 focus:ring-brand-cornflower/50'
                     )}
                   />
                 </div>
 
+                {/* Escalation Threshold — always shown so it can always be set/edited */}
+                <div>
+                  <label className="block text-sm font-medium text-foreground dark:text-slate-200 mb-1.5">
+                    Escalation Threshold
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={formData.threshold ?? ''}
+                      onChange={(e) =>
+                        handleInputChange(
+                          'threshold',
+                          e.target.value === '' ? null : Number(e.target.value)
+                        )
+                      }
+                      placeholder="e.g. 80"
+                      className={cn(
+                        'w-28 px-3 py-2 rounded-lg border border-input dark:border-slate-600',
+                        'dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500',
+                        'text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-cornflower/50'
+                      )}
+                    />
+                    <span className="text-sm text-muted-foreground dark:text-slate-400">
+                      Escalate when the value exceeds this number.
+                    </span>
+                  </div>
+                </div>
+
                 {/* Natural Language Input */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                  <label className="block text-sm font-medium text-foreground dark:text-slate-200 mb-1.5">
                     Your Rule (Natural Language) *
                   </label>
                   <textarea
@@ -310,18 +355,19 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                     placeholder="Describe your rule in plain English. E.g., 'If an invoice is under $500 and from an approved vendor, automatically approve it'"
                     rows={4}
                     className={cn(
-                      'w-full px-3 py-2 rounded-lg border border-input resize-none',
+                      'w-full px-3 py-2 rounded-lg border border-input dark:border-slate-600 resize-none',
+                      'dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500',
                       'text-sm focus:outline-none focus:ring-2 focus:ring-brand-cornflower/50'
                     )}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground dark:text-slate-400 mt-1">
                     Write your rule clearly. The AI will determine the best format (logical or natural language).
                   </p>
                 </div>
 
                 {/* Policy Type Selection */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
+                  <label className="block text-sm font-medium text-foreground dark:text-slate-200 mb-2">
                     Policy Type
                   </label>
                   <div className="grid grid-cols-2 gap-3">
@@ -331,23 +377,23 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                       className={cn(
                         'p-4 rounded-xl border-2 transition-all text-left',
                         formData.policy_type === 'logical'
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                          : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
                       )}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <Icons.grid className={cn(
                           'h-5 w-5',
-                          formData.policy_type === 'logical' ? 'text-blue-600' : 'text-gray-400'
+                          formData.policy_type === 'logical' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 dark:text-slate-500'
                         )} />
                         <span className={cn(
                           'font-medium',
-                          formData.policy_type === 'logical' ? 'text-blue-700' : 'text-gray-700'
+                          formData.policy_type === 'logical' ? 'text-blue-700 dark:text-blue-300' : 'text-gray-700 dark:text-slate-300'
                         )}>
                           Structured Rules
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground dark:text-slate-400">
                         Visual conditions and actions. Best for clear, quantifiable rules.
                       </p>
                     </button>
@@ -357,23 +403,23 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                       className={cn(
                         'p-4 rounded-xl border-2 transition-all text-left',
                         formData.policy_type === 'natural_language'
-                          ? 'border-purple-500 bg-purple-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                          : 'border-gray-200 dark:border-slate-600 hover:border-gray-300 dark:hover:border-slate-500'
                       )}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <Icons.brain className={cn(
                           'h-5 w-5',
-                          formData.policy_type === 'natural_language' ? 'text-purple-600' : 'text-gray-400'
+                          formData.policy_type === 'natural_language' ? 'text-purple-600 dark:text-purple-400' : 'text-gray-400 dark:text-slate-500'
                         )} />
                         <span className={cn(
                           'font-medium',
-                          formData.policy_type === 'natural_language' ? 'text-purple-700' : 'text-gray-700'
+                          formData.policy_type === 'natural_language' ? 'text-purple-700 dark:text-purple-300' : 'text-gray-700 dark:text-slate-300'
                         )}>
                           Natural Language
                         </span>
                       </div>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground dark:text-slate-400">
                         AI interprets refined instruction. Best for complex, contextual rules.
                       </p>
                     </button>
@@ -401,7 +447,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                       )}
                     </Button>
                     {formData.dsl && (
-                      <span className="text-sm text-emerald-600 flex items-center gap-1">
+                      <span className="text-sm text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                         <Icons.check className="h-4 w-4" />
                         Rules generated
                       </span>
@@ -411,7 +457,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                 
                 {/* Visual Rule Builder (for logical type with DSL) */}
                 {formData.policy_type === 'logical' && formData.dsl && (
-                  <div className="p-4 bg-blue-50/50 rounded-xl border border-blue-100">
+                  <div className="p-4 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/40">
                     <StructuredBuilder
                       initialDSL={{
                         conditions: formData.dsl.conditions.map((c, i) => ({
@@ -449,7 +495,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                 {/* Refined Instruction (for natural language type) */}
                 {formData.policy_type === 'natural_language' && (
                   <div>
-                    <label className="block text-sm font-medium text-foreground mb-1.5">
+                    <label className="block text-sm font-medium text-foreground dark:text-slate-200 mb-1.5">
                       Refined Instruction (AI-optimized)
                     </label>
                     <textarea
@@ -458,11 +504,12 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                       placeholder="The AI will use this refined version. Leave empty to use your original input."
                       rows={3}
                       className={cn(
-                        'w-full px-3 py-2 rounded-lg border border-input resize-none',
+                        'w-full px-3 py-2 rounded-lg border border-input dark:border-slate-600 resize-none',
+                        'dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500',
                         'text-sm font-mono focus:outline-none focus:ring-2 focus:ring-purple-500/50'
                       )}
                     />
-                    <p className="text-xs text-muted-foreground mt-1">
+                    <p className="text-xs text-muted-foreground dark:text-slate-400 mt-1">
                       Optionally refine the instruction. This is what the AI will actually use.
                     </p>
                   </div>
@@ -472,7 +519,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
               <>
                 {/* Entity Name */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                  <label className="block text-sm font-medium text-foreground dark:text-slate-200 mb-1.5">
                     Entity Name (Optional)
                   </label>
                   <input
@@ -481,18 +528,19 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                     onChange={(e) => handleInputChange('entity_name', e.target.value)}
                     placeholder="e.g., Vendor name, category, department"
                     className={cn(
-                      'w-full px-3 py-2 rounded-lg border border-input',
+                      'w-full px-3 py-2 rounded-lg border border-input dark:border-slate-600',
+                      'dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500',
                       'text-sm focus:outline-none focus:ring-2 focus:ring-brand-cornflower/50'
                     )}
                   />
-                  <p className="text-xs text-muted-foreground mt-1">
+                  <p className="text-xs text-muted-foreground dark:text-slate-400 mt-1">
                     If this policy applies to a specific entity (vendor, category, etc.)
                   </p>
                 </div>
 
                 {/* Priority */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                  <label className="block text-sm font-medium text-foreground dark:text-slate-200 mb-1.5">
                     Priority (Lower = Higher Priority)
                   </label>
                   <div className="flex items-center gap-3">
@@ -504,7 +552,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                       onChange={(e) => handleInputChange('priority', parseInt(e.target.value))}
                       className="flex-1"
                     />
-                    <span className="w-12 text-center text-sm font-mono bg-muted px-2 py-1 rounded">
+                    <span className="w-12 text-center text-sm font-mono bg-muted dark:bg-slate-800 dark:text-white px-2 py-1 rounded">
                       {formData.priority}
                     </span>
                   </div>
@@ -512,7 +560,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
 
                 {/* Tags */}
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-1.5">
+                  <label className="block text-sm font-medium text-foreground dark:text-slate-200 mb-1.5">
                     Tags
                   </label>
                   <div className="flex items-center gap-2 mb-2">
@@ -523,7 +571,8 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddTag())}
                       placeholder="Add a tag"
                       className={cn(
-                        'flex-1 px-3 py-2 rounded-lg border border-input',
+                        'flex-1 px-3 py-2 rounded-lg border border-input dark:border-slate-600',
+                        'dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500',
                         'text-sm focus:outline-none focus:ring-2 focus:ring-brand-cornflower/50'
                       )}
                     />
@@ -535,12 +584,12 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                     {formData.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted text-sm"
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-muted dark:bg-slate-800 dark:text-slate-200 text-sm"
                       >
                         #{tag}
                         <button
                           onClick={() => handleRemoveTag(tag)}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white"
                         >
                           <Icons.close className="h-3 w-3" />
                         </button>
@@ -550,10 +599,10 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                 </div>
 
                 {/* Active Status */}
-                <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                <div className="flex items-center justify-between p-4 bg-muted/50 dark:bg-slate-800/50 rounded-lg">
                   <div>
-                    <p className="font-medium text-foreground">Active Status</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="font-medium text-foreground dark:text-slate-200">Active Status</p>
+                    <p className="text-sm text-muted-foreground dark:text-slate-400">
                       {formData.is_active ? 'Policy is active and will be evaluated' : 'Policy is inactive'}
                     </p>
                   </div>
@@ -561,7 +610,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
                     onClick={() => handleInputChange('is_active', !formData.is_active)}
                     className={cn(
                       'w-12 h-6 rounded-full transition-colors relative',
-                      formData.is_active ? 'bg-emerald-500' : 'bg-gray-300'
+                      formData.is_active ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-slate-600'
                     )}
                   >
                     <span
@@ -575,12 +624,12 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
 
                 {/* Rule Summary (if available) */}
                 {formData.dsl && formData.policy_type === 'logical' && (
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-600">
                     <div className="flex items-center gap-2 mb-2">
-                      <Icons.info className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm font-medium text-foreground">Rule Summary</span>
+                      <Icons.info className="h-4 w-4 text-muted-foreground dark:text-slate-400" />
+                      <span className="text-sm font-medium text-foreground dark:text-slate-200">Rule Summary</span>
                     </div>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground dark:text-slate-400">
                       {formData.dsl.conditions.length} condition(s) and {formData.dsl.actions.length} action(s) configured. 
                       Edit rules in the Basic Settings tab using the visual builder.
                     </p>
@@ -591,7 +640,7 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
           </div>
 
           {/* Footer */}
-          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800/60">
             <Button variant="ghost" onClick={onClose}>
               Cancel
             </Button>
@@ -618,4 +667,3 @@ export function PolicyEditModal({ policy, isOpen, onClose, onSave }: PolicyEditM
     </AnimatePresence>
   )
 }
-

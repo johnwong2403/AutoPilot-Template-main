@@ -208,10 +208,10 @@ export function AIManager() {
                 // Size and positioning
                 'relative w-full max-w-2xl',
                 'h-[80vh] max-h-[700px] min-h-[450px]',
-                // Solid white background for better readability
-                'bg-white',
+                // Solid background for better readability (light + dark)
+                'bg-white dark:bg-slate-900',
                 // Border and shadow
-                'border border-gray-200',
+                'border border-gray-200 dark:border-slate-700',
                 'rounded-2xl',
                 'shadow-2xl',
                 // Layout
@@ -223,7 +223,7 @@ export function AIManager() {
               <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-brand-cornflower/20 via-transparent to-brand-purple/20 pointer-events-none" />
               
               {/* Header */}
-              <div className="relative border-b border-border/30 px-6 py-5">
+              <div className="relative border-b border-border/30 dark:border-slate-700 px-6 py-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     {/* AI Icon */}
@@ -239,13 +239,13 @@ export function AIManager() {
                     <div>
                       <h2 
                         id="ai-manager-title"
-                        className="text-xl font-semibold text-brand-navy"
+                        className="text-xl font-semibold text-brand-navy dark:text-white"
                       >
                         AutoPilot AI
                       </h2>
                       <p 
                         id="ai-manager-description"
-                        className="text-sm text-muted-foreground"
+                        className="text-sm text-muted-foreground dark:text-slate-400"
                       >
                         Your intelligent command center assistant
                       </p>
@@ -259,7 +259,7 @@ export function AIManager() {
                         variant="ghost"
                         size="sm"
                         onClick={clearHistory}
-                        className="text-muted-foreground hover:text-foreground gap-1.5"
+                        className="text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white gap-1.5"
                         title="Clear conversation"
                       >
                         <Icons.trash className="h-4 w-4" strokeWidth={1.5} />
@@ -271,7 +271,7 @@ export function AIManager() {
                       variant="ghost"
                       size="icon"
                       onClick={closeManager}
-                      className="text-muted-foreground hover:text-foreground hover:bg-red-50 hover:text-red-600"
+                      className="text-muted-foreground dark:text-slate-400 hover:text-foreground dark:hover:text-white hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-600 dark:hover:text-red-400"
                       title="Close (Esc)"
                     >
                       <Icons.close className="h-5 w-5" strokeWidth={1.5} />
@@ -284,7 +284,7 @@ export function AIManager() {
                   <div className={cn(
                     'inline-flex items-center gap-2 rounded-full px-3 py-1.5',
                     'bg-gradient-to-r from-brand-cornflower/10 to-brand-purple/10',
-                    'text-brand-navy border border-brand-cornflower/20',
+                    'text-brand-navy dark:text-white border border-brand-cornflower/20',
                     'text-sm font-medium'
                   )}>
                     <Icons.globe className="h-4 w-4 text-brand-cornflower" strokeWidth={1.5} />
@@ -294,7 +294,7 @@ export function AIManager() {
                   <kbd className={cn(
                     'hidden items-center rounded-md px-2 py-1 sm:inline-flex',
                     'text-xs font-medium',
-                    'border border-border/50 bg-muted/50 text-muted-foreground'
+                    'border border-border/50 dark:border-slate-600 bg-muted/50 dark:bg-slate-800 text-muted-foreground dark:text-slate-300'
                   )}>
                     <Icons.command className="h-3 w-3 mr-1" />
                     J to toggle
@@ -315,10 +315,10 @@ export function AIManager() {
                       <Icons.messageSquare className="h-10 w-10 text-brand-cornflower" strokeWidth={1.5} />
                     </div>
                     
-                    <h3 className="font-display text-xl font-semibold text-brand-navy">
+                    <h3 className="font-display text-xl font-semibold text-brand-navy dark:text-white">
                       How can I help you?
                     </h3>
-                    <p className="mt-2 max-w-sm text-muted-foreground">
+                    <p className="mt-2 max-w-sm text-muted-foreground dark:text-slate-400">
                       Ask me anything about your data, or use a quick action below.
                     </p>
 
@@ -344,7 +344,7 @@ export function AIManager() {
               </div>
 
               {/* Input Area */}
-              <div className="relative border-t border-border/30">
+              <div className="relative border-t border-border/30 dark:border-slate-700">
                 <ChatInput
                   onSend={handleSendMessage}
                   disabled={isTyping}

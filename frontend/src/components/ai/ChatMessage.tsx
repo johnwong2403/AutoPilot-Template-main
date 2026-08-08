@@ -41,7 +41,7 @@ function renderInlineMarkdown(text: string): React.ReactNode[] {
     if (segment.startsWith('**') && segment.endsWith('**')) {
       // Bold
       parts.push(
-        <strong key={keyIndex++} className="font-semibold text-foreground">
+        <strong key={keyIndex++} className="font-semibold text-foreground dark:text-white">
           {segment.slice(2, -2)}
         </strong>
       )
@@ -50,7 +50,7 @@ function renderInlineMarkdown(text: string): React.ReactNode[] {
       parts.push(
         <code
           key={keyIndex++}
-          className="px-1.5 py-0.5 bg-muted/50 rounded text-xs font-mono text-brand-navy"
+          className="px-1.5 py-0.5 bg-muted/50 dark:bg-slate-700 rounded text-xs font-mono text-brand-navy dark:text-brand-cornflower"
         >
           {segment.slice(1, -1)}
         </code>
@@ -92,14 +92,14 @@ function MarkdownContent({ content }: { content: string }) {
         // Headers (##, ###)
         if (trimmedLine.startsWith('### ')) {
           return (
-            <h4 key={i} className="font-semibold text-foreground mt-3 first:mt-0">
+            <h4 key={i} className="font-semibold text-foreground dark:text-white mt-3 first:mt-0">
               {renderInlineMarkdown(trimmedLine.slice(4))}
             </h4>
           )
         }
         if (trimmedLine.startsWith('## ')) {
           return (
-            <h3 key={i} className="font-bold text-foreground mt-3 first:mt-0">
+            <h3 key={i} className="font-bold text-foreground dark:text-white mt-3 first:mt-0">
               {renderInlineMarkdown(trimmedLine.slice(3))}
             </h3>
           )
@@ -110,7 +110,7 @@ function MarkdownContent({ content }: { content: string }) {
           return (
             <blockquote
               key={i}
-              className="pl-3 border-l-2 border-brand-cornflower/50 text-muted-foreground italic"
+              className="pl-3 border-l-2 border-brand-cornflower/50 text-muted-foreground dark:text-slate-400 italic"
             >
               {renderInlineMarkdown(trimmedLine.slice(2))}
             </blockquote>
@@ -120,7 +120,7 @@ function MarkdownContent({ content }: { content: string }) {
         // Bullet points (* or -)
         if (/^[*\-]\s/.test(trimmedLine)) {
           return (
-            <div key={i} className="flex gap-2 pl-1">
+            <div key={i} className="flex gap-2 pl-1 text-foreground dark:text-slate-100">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-cornflower/60 mt-2 flex-shrink-0" />
               <span>{renderInlineMarkdown(trimmedLine.replace(/^[*\-]\s/, ''))}</span>
             </div>
@@ -132,7 +132,7 @@ function MarkdownContent({ content }: { content: string }) {
           const match = trimmedLine.match(/^(\d+)\.\s(.*)/)
           if (match) {
             return (
-              <div key={i} className="flex gap-2 pl-1">
+              <div key={i} className="flex gap-2 pl-1 text-foreground dark:text-slate-100">
                 <span className="text-brand-cornflower font-medium min-w-[1.25rem]">
                   {match[1]}.
                 </span>
@@ -143,7 +143,7 @@ function MarkdownContent({ content }: { content: string }) {
         }
         
         // Regular paragraph
-        return <p key={i}>{renderInlineMarkdown(trimmedLine)}</p>
+        return <p key={i} className="text-foreground dark:text-slate-100">{renderInlineMarkdown(trimmedLine)}</p>
       })}
     </div>
   )
@@ -190,7 +190,7 @@ export function ChatMessage({ message, userName, userImage }: ChatMessageProps) 
             'transition-all duration-200',
             isUser
               ? 'bg-brand-navy text-white rounded-br-md'
-              : 'bg-white/90 text-foreground border border-border/50 rounded-bl-md shadow-soft',
+              : 'bg-white/90 dark:bg-slate-800 text-foreground dark:text-slate-100 border border-border/50 dark:border-slate-700 rounded-bl-md shadow-soft',
             isLoading && 'animate-pulse'
           )}
         >
@@ -201,7 +201,7 @@ export function ChatMessage({ message, userName, userImage }: ChatMessageProps) 
                 <span className="h-2 w-2 animate-bounce rounded-full bg-brand-muted/60" style={{ animationDelay: '150ms' }} />
                 <span className="h-2 w-2 animate-bounce rounded-full bg-brand-muted/60" style={{ animationDelay: '300ms' }} />
               </div>
-              <span className="text-sm text-brand-muted">Thinking...</span>
+              <span className="text-sm text-brand-muted dark:text-slate-400">Thinking...</span>
             </div>
           ) : isUser ? (
             <p className="text-sm whitespace-pre-wrap leading-relaxed">
@@ -214,7 +214,7 @@ export function ChatMessage({ message, userName, userImage }: ChatMessageProps) 
 
         {/* Timestamp */}
         <span className={cn(
-          'text-[10px] text-muted-foreground/60',
+          'text-[10px] text-muted-foreground/60 dark:text-slate-500',
           isUser ? 'pr-1' : 'pl-1'
         )}>
           {formatTime(message.timestamp)}

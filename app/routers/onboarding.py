@@ -7,6 +7,7 @@ FastAPI routes for the Onboarding & Retention Command Center.
 import asyncio
 
 from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel
 
 from app.services.supabase_client import (
     fetch_latest_onboarding_snapshot,
@@ -20,14 +21,23 @@ from app.services.orchestrator_tracker import start_new_run, run_and_track
 router = APIRouter()
 
 
+class TriggerRequest(BaseModel):
+    # Optional — if provided, this run processes that specific employee's
+    # real data instead of the front of the queue. Left blank/omitted, the
+    # behavior is unchanged from before.
+    employee_id: str | None = None
+
+
 @router.post("/trigger")
-async def trigger_onboarding_run():
+async def trigger_onboarding_run(body: TriggerRequest | None = None):
+    employee_id = body.employee_id.strip() if body and body.employee_id else None
+
     try:
-        run = await start_new_run()
+        run = await start_new_run(employee_id=employee_id)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to start run: {str(e)}")
 
-    asyncio.create_task(run_and_track(run["id"]))
+    asyncio.create_task(run_and_track(run["id"], employee_id=employee_id))
     return run
 
 

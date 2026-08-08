@@ -40,12 +40,21 @@ def _headers(api_key: str, org_key: str, timezone: str) -> dict:
     return headers
 
 
-async def trigger_orchestrator_stream() -> AsyncGenerator[dict[str, Any], None]:
+async def trigger_orchestrator_stream(
+    employee_id: str | None = None,
+) -> AsyncGenerator[dict[str, Any], None]:
     """
     Triggers one run of the Orchestrator and yields each SSE event as it
     arrives. Each yielded dict has "event" (the SSE event name, e.g.
     "ping", "activity-run", "thinking", "result", "error") and "data"
     (the parsed JSON payload for that event).
+
+    If employee_id is given, it's sent to Auto as an extra input field
+    (inputs[employee_id]) so the workflow can process that specific
+    employee instead of its default "front of queue" lookup — but only
+    if the Auto workflow's own steps are set up to read and use it.
+    Omitting employee_id leaves the request byte-for-byte identical to
+    before this parameter existed.
     """
     config = _get_config()
     url = f"{config['base_url']}/workflow-runs/execute/stream"
@@ -55,6 +64,8 @@ async def trigger_orchestrator_stream() -> AsyncGenerator[dict[str, Any], None]:
         "inputs[supabase_url]": (None, config["supabase_url"]),
         "inputs[supabase_token]": (None, config["supabase_token"]),
     }
+    if employee_id:
+        files["inputs[employee_id]"] = (None, employee_id)
 
     timeout = httpx.Timeout(connect=15.0, read=180.0, write=30.0, pool=15.0)
 
@@ -102,7 +113,9 @@ async def trigger_orchestrator_stream() -> AsyncGenerator[dict[str, Any], None]:
                 # ignore other SSE fields (id:, retry:, comments starting with ':')
 
 
-async def trigger_orchestrator_and_collect() -> dict[str, Any]:
+async def trigger_orchestrator_and_collect(
+    employee_id: str | None = None,
+) -> dict[str, Any]:
     """
     Runs the Orchestrator and waits for the stream to finish, returning
     the "result" event's data (or "error" event's data) as the final
@@ -111,7 +124,7 @@ async def trigger_orchestrator_and_collect() -> dict[str, Any]:
     """
     last_event: dict[str, Any] = {}
 
-    async for event in trigger_orchestrator_stream():
+    async for event in trigger_orchestrator_stream(employee_id=employee_id):
         event_name = event.get("event")
         data = event.get("data")
 
