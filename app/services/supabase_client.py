@@ -90,6 +90,52 @@ def fetch_employee_tasks(employee_id: str) -> list[dict]:
     return tasks
 
 
+# ---------- Confidential disclosures (sensitive pulse comments) ----------
+#
+# Peakon_Engagement rows flagged x_confidential = True must never surface
+# on the Dashboard, Insights, or the normal Workbench exception queue —
+# they route through this separate, deliberately isolated path instead,
+# matching the brief's "sensitive disclosure ... must never appear on a
+# dashboard and must reach the right person confidentially" requirement.
+
+def list_confidential_disclosures() -> list[dict]:
+    """
+    Returns every pulse-survey comment flagged as confidential, joined
+    with the employee's name so a reviewer has enough context without
+    exposing this anywhere else in the product. Never call this from
+    any Dashboard/Insights code path — only from the gated Workbench
+    confidential tab.
+    """
+    resp = (
+        supabase.table("Peakon_Engagement")
+        .select("*")
+        .eq("x_confidential", True)
+        .order("Submitted_At", desc=True)
+        .execute()
+    )
+    disclosures = resp.data or []
+
+    employee_ids = list({d.get("Employee_ID") for d in disclosures if d.get("Employee_ID")})
+    workers_by_id: dict[str, dict] = {}
+    if employee_ids:
+        workers_resp = (
+            supabase.table("Workers")
+            .select("Employee_ID, Legal_Name, Preferred_Name")
+            .in_("Employee_ID", employee_ids)
+            .execute()
+        )
+        for w in workers_resp.data or []:
+            workers_by_id[w["Employee_ID"]] = w
+
+    for d in disclosures:
+        worker = workers_by_id.get(d.get("Employee_ID"))
+        d["employee_name"] = (
+            (worker.get("Preferred_Name") or worker.get("Legal_Name")) if worker else None
+        )
+
+    return disclosures
+
+
 def update_task_status(task_id: str, status: str) -> dict:
     """
     Updates the Status field of a single Onboarding_Tasks row — powers

@@ -12,6 +12,7 @@ import {
   ExternalLink as ExternalLinkIcon,
   Hourglass as PendingIcon,
   ShieldCheck as ResolvedIcon,
+  ShieldCheck as ShieldCheckIcon,
   ThumbsUp as ApprovedIcon,
   HelpCircle as LowConfidenceIcon,
   GitMerge as ConflictIcon,
@@ -341,6 +342,110 @@ function ExceptionCard({
   )
 }
 
+// ============================================================================
+// Confidential Disclosures — a deliberately separate, gated queue for
+// sensitive pulse-survey comments (x_confidential = true in Peakon_
+// Engagement). Never merged with the normal exception queue, never
+// surfaced on the Dashboard or AI Insights. Matches the brief's
+// requirement that a sensitive disclosure "must never appear on a
+// dashboard and must reach the right person confidentially."
+// ============================================================================
+
+interface ConfidentialDisclosure {
+  Response_ID: string
+  Employee_ID?: string
+  employee_name?: string | null
+  Survey_Round?: string
+  Milestone?: string
+  Driver?: string
+  Score?: number
+  Comment?: string
+  Submitted_At?: string
+  manager_response_days?: number
+}
+
+function ConfidentialQueue() {
+  const [unlocked, setUnlocked] = useState(false)
+  const [disclosures, setDisclosures] = useState<ConfidentialDisclosure[] | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  const handleUnlock = () => {
+    setUnlocked(true)
+    setLoading(true)
+    apiClient<{ disclosures: ConfidentialDisclosure[] }>('/api/onboarding/confidential-disclosures')
+      .then((data) => setDisclosures(data.disclosures || []))
+      .catch((err) => {
+        console.error('Failed to load confidential disclosures', err)
+        setDisclosures([])
+      })
+      .finally(() => setLoading(false))
+  }
+
+  if (!unlocked) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 py-16 text-center shadow-sm">
+        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-50 dark:bg-red-950">
+          <ConflictIcon className="h-6 w-6 text-red-500 rotate-90" />
+        </div>
+        <div>
+          <p className="font-semibold text-slate-800 dark:text-slate-100">Restricted — Confidential Disclosures</p>
+          <p className="mx-auto mt-1 max-w-sm text-sm text-slate-400 dark:text-slate-500">
+            This queue contains sensitive pulse-survey comments. It never appears on the Dashboard or
+            AI Insights, and is only visible to an authorized reviewer.
+          </p>
+        </div>
+        <Button onClick={handleUnlock} className="bg-gradient-to-r from-red-600 to-rose-500 hover:from-red-700 hover:to-rose-600">
+          <ShieldCheckIcon className="mr-2 h-4 w-4" />
+          I am authorized — Unlock queue
+        </Button>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-4">
+      {loading ? (
+        <p className="text-sm text-slate-400 dark:text-slate-500">Loading confidential disclosures...</p>
+      ) : !disclosures || disclosures.length === 0 ? (
+        <div className="rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 py-8 text-center text-sm text-slate-400 dark:text-slate-500 shadow-sm">
+          No confidential disclosures right now.
+        </div>
+      ) : (
+        disclosures.map((d) => (
+          <div
+            key={d.Response_ID}
+            className="rounded-2xl border-l-4 border-l-red-400 bg-white dark:bg-slate-900 p-5 shadow-sm"
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h3 className="text-base font-semibold text-slate-800 dark:text-slate-100">
+                  {d.employee_name || d.Employee_ID || 'Unknown employee'}
+                  {d.Employee_ID && d.employee_name && (
+                    <span className="ml-1 font-normal text-slate-400 dark:text-slate-500">({d.Employee_ID})</span>
+                  )}
+                </h3>
+                <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">
+                  {d.Driver && <span>{d.Driver} · </span>}
+                  {d.Milestone && <span>{d.Milestone} · </span>}
+                  {d.Submitted_At && <span>{new Date(d.Submitted_At).toLocaleString()}</span>}
+                </p>
+              </div>
+              <span className="shrink-0 rounded-full border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/50 px-3 py-1 text-xs font-semibold text-red-700 dark:text-red-400">
+                Confidential
+              </span>
+            </div>
+            {d.Comment && (
+              <p className="mt-3 rounded-xl bg-slate-50 dark:bg-slate-800 p-3 text-sm text-slate-700 dark:text-slate-200">
+                &ldquo;{d.Comment}&rdquo;
+              </p>
+            )}
+          </div>
+        ))
+      )}
+    </div>
+  )
+}
+
 export default function WorkbenchPage() {
   const [exceptions, setExceptions] = useState<Exception[]>([])
   const [resolved, setResolved] = useState<Exception[]>([])
@@ -348,6 +453,7 @@ export default function WorkbenchPage() {
   const [resolvingId, setResolvingId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<ExceptionCategory | 'All'>('All')
+  const [activeTab, setActiveTab] = useState<'exceptions' | 'confidential'>('exceptions')
 
   const loadExceptions = async () => {
     setLoading(true)
@@ -445,6 +551,37 @@ export default function WorkbenchPage() {
         </div>
       )}
 
+      {/* Tab switcher: Exception Queue vs Confidential Disclosures */}
+      <motion.div variants={itemVariants} className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
+        <button
+          onClick={() => setActiveTab('exceptions')}
+          className={cn(
+            'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
+            activeTab === 'exceptions'
+              ? 'border-indigo-600 text-indigo-600 dark:text-indigo-400'
+              : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+          )}
+        >
+          Exception Queue
+        </button>
+        <button
+          onClick={() => setActiveTab('confidential')}
+          className={cn(
+            'flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-colors -mb-px',
+            activeTab === 'confidential'
+              ? 'border-red-500 text-red-600 dark:text-red-400'
+              : 'border-transparent text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+          )}
+        >
+          <ShieldCheckIcon className="h-3.5 w-3.5" />
+          Confidential
+        </button>
+      </motion.div>
+
+      {activeTab === 'confidential' ? (
+        <ConfidentialQueue />
+      ) : (
+        <>
       <motion.div variants={itemVariants} className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">Exception Queue</h2>
@@ -513,6 +650,8 @@ export default function WorkbenchPage() {
             })}
           </div>
         </motion.div>
+      )}
+        </>
       )}
     </motion.div>
   )

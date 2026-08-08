@@ -15,6 +15,7 @@ from app.services.supabase_client import (
     fetch_employee_tasks,
     update_task_status,
     create_task,
+    list_confidential_disclosures,
     fetch_latest_orchestrator_run,
     clear_orchestrator_runs,
     get_dashboard_stats,
@@ -122,6 +123,20 @@ async def update_task_status_route(task_id: str, body: TaskStatusUpdate):
         return update_task_status(task_id, body.status)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Failed to update task: {str(e)}")
+
+
+@router.get("/confidential-disclosures")
+async def get_confidential_disclosures():
+    """
+    Sensitive pulse-survey comments (x_confidential = true). Deliberately
+    isolated from every other endpoint — never referenced by dashboard-
+    stats, insights, or the normal exception queue. Only the gated
+    Workbench "Confidential" tab calls this.
+    """
+    try:
+        return {"disclosures": list_confidential_disclosures()}
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Failed to read Supabase: {str(e)}")
 
 
 @router.get("/run-state")
