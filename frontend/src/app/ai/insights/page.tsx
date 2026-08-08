@@ -197,7 +197,11 @@ export default function AIInsightsPage() {
 
   const criticalCount = insights.filter((i) => i.severity === 'critical').length
   const warningCount = insights.filter((i) => i.severity === 'warning').length
-  const recommendationCount = insights.filter((i) => i.severity === 'info').length
+  // Fixed: was `i.severity === 'info'`, which also matched `pattern`-type
+  // insights (they carry severity "info" too) and made this number
+  // disagree with the Actions tab, which filters strictly on
+  // `type === 'recommendation'`. Now both use the same criterion.
+  const recommendationCount = insights.filter((i) => i.type === 'recommendation').length
 
   return (
     <motion.div

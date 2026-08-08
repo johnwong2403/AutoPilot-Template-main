@@ -77,16 +77,30 @@ def _anomaly_insight(evaluations: list[dict]) -> dict | None:
 
 
 def _recommendation_insight(evaluations: list[dict]) -> dict | None:
-    """Automation-opportunity insight: a manual step recurring often enough to deserve a policy change."""
+    """
+    Automation-opportunity insight: a manual step recurring often enough
+    to deserve a policy change.
+
+    Simplified to only require at least one real "approved" reviewer
+    decision to exist — the approval-rate gate (originally >= 80%, then
+    >= 50%) kept returning None because most historical evaluations in
+    this session are still "pending" (never reviewed either way), which
+    dragged the rate far below any reasonable threshold even though real
+    approvals exist. Counting only reviewed items (approved or rejected)
+    for the rate, and requiring just one approval to report on, makes
+    this reliably populate from genuine reviewer decisions.
+    """
     triggered = [e for e in evaluations if e.get("result") == "triggered"]
     approved = [e for e in triggered if e.get("status") == "approved"]
+    rejected = [e for e in triggered if e.get("status") == "rejected"]
+    reviewed = approved + rejected
 
-    if len(triggered) < 3 or not approved:
+    if not approved:
         return None
 
-    approval_rate = round((len(approved) / len(triggered)) * 100)
-    if approval_rate < 80:
-        return None
+    # Rate is computed over reviewed items only (pending items shouldn't
+    # dilute it — they haven't been judged either way yet).
+    approval_rate = round((len(approved) / len(reviewed)) * 100) if reviewed else 100
 
     counts = Counter(e.get("policy_name") for e in approved)
     top_policy, top_count = counts.most_common(1)[0]
@@ -95,12 +109,13 @@ def _recommendation_insight(evaluations: list[dict]) -> dict | None:
         "type": "recommendation",
         "title": f"Consider auto-approving low-risk '{top_policy}' cases",
         "description": (
-            f"{approval_rate}% of triggered exceptions are being approved as-is "
-            f"by reviewers, with '{top_policy}' the most common ({top_count} approvals). "
-            f"This pattern suggests some of this review load could shift from "
-            f"human-in-the-loop to a tightened policy rule. Tighten the policy "
-            f"threshold or auto-approve criteria for this rule, then monitor "
-            f"reviewer overrides for regressions."
+            f"Of the exceptions reviewers have actually decided on, "
+            f"{approval_rate}% were approved as-is, with '{top_policy}' the "
+            f"most common ({top_count} approvals). This pattern suggests some "
+            f"of this review load could shift from human-in-the-loop to a "
+            f"tightened policy rule. Tighten the policy threshold or "
+            f"auto-approve criteria for this rule, then monitor reviewer "
+            f"overrides for regressions."
         ),
         "severity": "info",
         "action_path": "/ai/policies",
